@@ -36,3 +36,24 @@
     transform: rotate(360deg);
   }
 }
+
+.main-content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: calc(100vh - 64px);
+  /* Adjust height if needed */
+}
+
+.side-by-side {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.pomodoro-container,
+.todo-container {
+  flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+}
