@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from "react";
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -7,9 +7,9 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 
-export default function ButtonAppBar() {
+export default function ButtonAppBar({ loginWithRedirect, logout, isAuthenticated }) {
   return (
-    <Box sx={{ flexGrow: 1}}>
+    <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
           <IconButton
@@ -22,9 +22,18 @@ export default function ButtonAppBar() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            My Todos
+            Pomodoro - Focus & Track my Todos
           </Typography>
-          <Button color="inherit">Login</Button>
+          {!isAuthenticated ? (
+            <Button color="inherit" onClick={loginWithRedirect}>Login</Button>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mr: 2 }}>Welcome</Typography>
+              <Button color="inherit" onClick={() => logout({ returnTo: window.location.origin })}>
+                Logout
+              </Button>
+            </>
+          )}
         </Toolbar>
       </AppBar>
     </Box>

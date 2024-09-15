@@ -7,7 +7,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
-export default function Pomodoro({ selectedTodo }) {
+export default function Pomodoro({loginWithRedirect, isAuthenticated, selectedTodo, token }) {
   const [countdown, setCountdown] = useState(25 * 60); // Default to 25 minutes
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -37,14 +37,18 @@ export default function Pomodoro({ selectedTodo }) {
 
     if (sessionId) {
       fetch(`http://localhost:8080/sessions/${sessionId}/end`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
       })
       .then(() => setSessionId(null))
       .catch(error => console.error('Error resetting session:', error));
     }
 
     alertTriggeredRef.current = false; // Reset alert trigger state
-  }, [isBreak, sessionId]);
+  }, [isBreak, sessionId, token]);
 
   // Start timer function
   const startTimer = useCallback(() => {
@@ -55,7 +59,10 @@ export default function Pomodoro({ selectedTodo }) {
 
     fetch(`http://localhost:8080/sessions/${selectedTodo.id}/start?isBreak=${isBreak}`, {
       method: 'POST',
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
     })
     .then(response => response.json())
     .then(data => {
@@ -64,7 +71,7 @@ export default function Pomodoro({ selectedTodo }) {
       setIsPaused(false);
     })
     .catch(error => console.error('Error starting session:', error));
-  }, [selectedTodo, isBreak]);
+  }, [selectedTodo, isBreak, token]);
 
   // Pause timer function
   const pauseTimer = useCallback(() => {
@@ -74,11 +81,14 @@ export default function Pomodoro({ selectedTodo }) {
     if (sessionId) {
       fetch(`http://localhost:8080/sessions/${sessionId}/update`, {
         method: 'PATCH',
-        headers: { "Content-Type": "application/json" }
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
       })
       .catch(error => console.error('Error pausing session:', error));
     }
-  }, [sessionId]);
+  }, [sessionId, token]);
 
   // Resume timer function
   const resumeTimer = useCallback(() => {
@@ -148,8 +158,12 @@ export default function Pomodoro({ selectedTodo }) {
       )}
       <div style={{ marginTop: 20 }}>
         {!isRunning ? (
-          <IconButton aria-label="start" onClick={startTimer}>
-            <PlayArrowIcon />
+          <IconButton aria-label="start">
+          {!isAuthenticated ? (
+            <PlayArrowIcon onClick={loginWithRedirect}/>
+          ) : (
+            <PlayArrowIcon onClick={startTimer}/>
+          )}
           </IconButton>
         ) : isPaused ? (
           <IconButton aria-label="resume" onClick={resumeTimer}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
@@ -8,7 +8,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import TimerIcon from '@mui/icons-material/Timer';
 import Typography from '@mui/material/Typography';
 
-export default function Todo({ onSelectTodo }) {
+export default function Todo({ isAuthenticated, onSelectTodo }) {
   const paperStyle = { padding: '50px 30px', width: 600, margin: '20px auto' };
   const [title, setTitle] = useState('');
   const [todos, setTodos] = useState([]);
@@ -16,10 +16,12 @@ export default function Todo({ onSelectTodo }) {
   const handleClick = (e) => {
     e.preventDefault();
     const todo = { title, accumulatedTime: 0 };
-    console.log(todo);
+
     fetch('http://localhost:8080/todo/add', {
       method: 'POST',
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(todo),
     })
     .then(() => {
@@ -30,36 +32,41 @@ export default function Todo({ onSelectTodo }) {
     .catch(error => console.error('Error adding todo:', error));
   };
 
-  const fetchTodos = () => {
+  const fetchTodos = useCallback(() => {
     fetch('http://localhost:8080/todo/getAll')
-      .then(res => res.json())
-      .then(data => {
-        console.log(data);
-        setTodos(data);
-      })
-      .catch(error => console.error('Error fetching todos:', error));
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+      setTodos(data);
+    })
+    .catch(error => console.error('Error fetching todos:', error));
+  }, []);
+
+  const deleteTodo = (todoId) => {
+    fetch(`http://localhost:8080/todo/delete/${todoId}`, {
+      method: 'DELETE',
+    })
+    .then(response => {
+      if (response.ok) {
+        console.log('Todo deleted successfully');
+        fetchTodos();
+      } else {
+        console.error('Failed to delete todo');
+      }
+    })
+    .catch(error => console.error('Error deleting todo:', error));
   };
 
-const deleteTodo = (id) => {
-  console.log('Attempting to delete todo with id:', id);
-  fetch(`http://localhost:8080/todo/delete/${id}`, {
-    method: 'DELETE',
-  })
-  .then(response => {
-    if (response.ok) {
-      console.log('Todo deleted successfully');
-      return fetchTodos(); // Ensure todos are refetched
-    } else {
-      console.error('Failed to delete todo');
-    }
-  })
-  .catch(error => console.error('Error deleting todo:', error));
-};
-
+  
 
   useEffect(() => {
     fetchTodos();
-  }, []);
+  }, [fetchTodos]);
 
   return (
     <Box
@@ -78,9 +85,7 @@ const deleteTodo = (id) => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <Button onClick={handleClick}>
-          Submit
-        </Button>
+        <Button onClick={handleClick}>Submit</Button>
       </Paper>
 
       <Paper elevation={3} style={paperStyle}>
@@ -89,9 +94,11 @@ const deleteTodo = (id) => {
           <Paper elevation={3} sx={{ margin: '10px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'left' }} key={todo.id}>
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6">{todo.title}</Typography>
+              {isAuthenticated && (
               <Typography variant="body2" color="text.secondary">
                 Time used: {formatTime(todo.accumulatedTime)}
               </Typography>
+              )}
             </Box>
             <Box>
               <IconButton aria-label="start timer" onClick={() => onSelectTodo(todo)}>
